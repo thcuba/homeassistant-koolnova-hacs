@@ -1,0 +1,80 @@
+name: Validate HACS Integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: HACS Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install homeassistant
+
+      - name: Run HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration
+
+      - name: Check manifest.json
+        run: |
+          echo "=== Checking manifest.json ==="
+          if [ -f custom_components/*/manifest.json ]; then
+            cat custom_components/*/manifest.json | python3 -c "
+              import json, sys
+              manifest = json.load(sys.stdin)
+              required_keys = ['domain', 'name', 'version', 'codeowners']
+              for key in required_keys:
+                  if key not in manifest:
+                      print(f'ERROR: Missing required key: {key}')
+                      sys.exit(1)
+                  else:
+                      print(f'✓ {key}: {manifest[key]}')
+              print('✓ manifest.json is valid')
+            "
+          else
+            echo "ERROR: No manifest.json found"
+            exit 1
+          fi
+
+      - name: Check for required files
+        run: |
+          echo "=== Checking required files ==="
+          REQUIRED_FILES=(
+            "custom_components/*/__init__.py"
+            "custom_components/*/manifest.json"
+            "custom_components/*/const.py"
+            "hacs.json"
+          )
+          for file in "${REQUIRED_FILES[@]}"; do
+            if ls custom_components/$file 2>/dev/null; then
+              echo "✓ $file exists"
+            else
+              echo "WARNING: $file not found"
+            fi
+          done
+
+      - name: Check icon.png
+        run: |
+          echo "=== Checking icon.png ==="
+          if [ -f custom_components/*/brand/icon.png ]; then
+            echo "✓ icon.png exists in brand folder"
+          elif [ -f icon.png ]; then
+            echo "✓ icon.png exists in root"
+          else
+            echo "WARNING: icon.png not found"
+          fi
