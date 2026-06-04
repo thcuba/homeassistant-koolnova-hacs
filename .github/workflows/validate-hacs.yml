@@ -30,51 +30,66 @@ jobs:
         with:
           category: integration
 
-      - name: Check manifest.json
+      - name: Create validation script
         run: |
-          echo "=== Checking manifest.json ==="
-          if [ -f custom_components/*/manifest.json ]; then
-            cat custom_components/*/manifest.json | python3 -c "
-              import json, sys
-              manifest = json.load(sys.stdin)
-              required_keys = ['domain', 'name', 'version', 'codeowners']
-              for key in required_keys:
-                  if key not in manifest:
-                      print(f'ERROR: Missing required key: {key}')
-                      sys.exit(1)
-                  else:
-                      print(f'✓ {key}: {manifest[key]}')
-              print('✓ manifest.json is valid')
-            "
-          else
-            echo "ERROR: No manifest.json found"
-            exit 1
-          fi
+          cat > validate.py << 'EOF'
+          import json
+          import sys
+          import os
+          from pathlib import Path
 
-      - name: Check for required files
-        run: |
-          echo "=== Checking required files ==="
-          REQUIRED_FILES=(
-            "custom_components/*/__init__.py"
-            "custom_components/*/manifest.json"
-            "custom_components/*/const.py"
-            "hacs.json"
-          )
-          for file in "${REQUIRED_FILES[@]}"; do
-            if ls custom_components/$file 2>/dev/null; then
-              echo "✓ $file exists"
-            else
-              echo "WARNING: $file not found"
-            fi
-          done
+          print("=== Validating HACS Integration ===")
 
-      - name: Check icon.png
-        run: |
-          echo "=== Checking icon.png ==="
-          if [ -f custom_components/*/brand/icon.png ]; then
-            echo "✓ icon.png exists in brand folder"
-          elif [ -f icon.png ]; then
-            echo "✓ icon.png exists in root"
-          else
-            echo "WARNING: icon.png not found"
-          fi
+          # Find manifest.json
+          manifest_files = list(Path("custom_components").glob("*/manifest.json"))
+          if not manifest_files:
+              print("ERROR: No manifest.json found")
+              sys.exit(1)
+
+          manifest_path = manifest_files[0]
+          print(f"Found manifest: {manifest_path}")
+
+          # Validate manifest JSON
+          try:
+              with open(manifest_path) as f:
+                  manifest = json.load(f)
+              print("✓ manifest.json is valid JSON")
+          except Exception as e:
+              print(f"ERROR: Invalid manifest.json: {e}")
+              sys.exit(1)
+
+          # Check required keys
+          required_keys = ['domain', 'name', 'version', 'codeowners']
+          for key in required_keys:
+              if key in manifest:
+                  print(f"✓ {key}: {manifest[key]}")
+              else:
+                  print(f"ERROR: Missing required key: {key}")
+                  sys.exit(1)
+
+          # Check hacs.json
+          if os.path.exists("hacs.json"):
+              try:
+                  with open("hacs.json") as f:
+                      hacs = json.load(f)
+                  print("✓ hacs.json is valid JSON")
+              except Exception as e:
+                  print(f"WARNING: Invalid hacs.json: {e}")
+          else:
+              print("WARNING: hacs.json not found")
+
+          # Check icon.png
+          icon_paths = list(Path("custom_components").glob("*/brand/icon.png"))
+          if icon_paths:
+              print("✓ icon.png found in brand folder")
+          elif os.path.exists("icon.png"):
+              print("✓ icon.png exists in root")
+          else:
+              print("WARNING: icon.png not found")
+
+          print("✓ All validations passed")
+          EOF
+          python3 validate.py
+
+      - name: Clean up
+        run: rm -f validate.py
