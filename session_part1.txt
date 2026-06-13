@@ -16,11 +16,13 @@ from requests.exceptions import HTTPError
 #logging.basicConfig(level=logging.DEBUG)
 
 from .const import KOOLNOVA_API_URL
-from .const import KOOLNOVA_AUTH_URL, COMMON_HEADERS
+from .const import KOOLNOVA_AUTH_URL
 
 _LOGGER = logging.getLogger(__name__)
 
-
+# ============= COSTANTI CENTRALIZZATE USER-AGENT =============
+DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+# =============================================================
 
 # Retry policy constants
 DEFAULT_MAX_RETRIES = 3
@@ -79,10 +81,15 @@ class KoolnovaClientSession(Session):
         _LOGGER.debug("Auth payload: %s", payload)
 
         # Add headers similar to browser request (helps servers routing based on Origin/UA)
-        headers_token = COMMON_HEADERS.copy()
-        headers_token.update({
+        headers_token = {
+            "accept": "application/json, text/plain, */*",
             "content-type": "application/json",
-        })
+            "accept-language": "fr",
+            "origin": "https://app.koolnova.com",
+            "referer": "https://app.koolnova.com/",
+            "cache-control": "no-cache",
+            "user-agent": DEFAULT_USER_AGENT,  # <- USAR CONSTANTE
+        }
 
         # Improved retry logic with exponential backoff for rate limiting
         response = None
@@ -219,10 +226,11 @@ class KoolnovaClientSession(Session):
             self._refresh_session()
 
         token = self.bearerToken if isinstance(self.bearerToken, str) else ""
-        headers_auth = COMMON_HEADERS.copy()
-        headers_auth.update({
+        headers_auth = {
             "Authorization": "Bearer " + token,
-        })
+            "Cache-Control": "no-cache",
+            "User-Agent": DEFAULT_USER_AGENT,  # <- AGGIUNTO USER-AGENT QUI
+        }
         # Merge headers passed as argument
         headers = kwargs.pop("headers", {})
         headers_auth.update(headers)
@@ -289,7 +297,3 @@ class KoolnovaClientSession(Session):
                     time.sleep(delay)
                     continue
                 raise
-
-        # If we get here, all retries exhausted
-        _LOGGER.error("All %d retry attempts exhausted for %s %s", retries + 1, method, url)
-        raise RuntimeError(f"All retry attempts exhausted for {method} {url}")

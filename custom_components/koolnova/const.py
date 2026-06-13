@@ -10,7 +10,7 @@ from homeassistant.components.climate import (
 )
 
 DOMAIN = "koolnova"
-PLATFORMS = ["climate"]
+PLATFORMS = ["climate", "sensor"]
 
 # CONFIGURABLES: Valores por defecto y limites
 DEFAULT_UPDATE_INTERVAL = 10  # segundos
