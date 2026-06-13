@@ -1,0 +1,3 @@
+        # If we get here, all retries exhausted
+        _LOGGER.error("All %d retry attempts exhausted for %s %s", retries + 1, method, url)
+        raise RuntimeError(f"All retry attempts exhausted for {method} {url}")
