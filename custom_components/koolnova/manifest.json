@@ -1,13 +1,12 @@
 {
   "domain": "koolnova",
   "name": "Koolnova",
-  "codeowners": ["@thcuba", "@luisgsluis"],
+  "codeowners": ["@luisgsluis", "@thcuba"],
   "config_flow": true,
   "dependencies": [],
-  "requirements": ["requests", "python-dateutil"],
-  "documentation": "https://github.com/thcuba/homeassistant-koolnova-hacs",
+  "documentation": "https://github.com/thcuba/homeassistant-koolnova",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/thcuba/homeassistant-koolnova-hacs/issues",
-  "version": "1.2.5"
+  "issue_tracker": "https://github.com/thcuba/homeassistant-koolnova/issues",
+  "version": "2.0.9"
 }

@@ -195,7 +195,6 @@ La integración actual cubre las necesidades básicas de control HVAC. Los endpo
 ### Configuración del Sistema Analizado
 - **Proyecto**: "CASA" (ID: 1174) - Estado: ONLINE
 - **Dispositivos**: 8 sensores/zonas activas
-- **Usuario**: luisgsluis@gmail.com
 - **Estado general**: Todos los dispositivos conectados y funcionales
 
 ### Endpoints Funcionando Confirmados

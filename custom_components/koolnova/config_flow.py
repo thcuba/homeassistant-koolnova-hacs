@@ -1,5 +1,4 @@
 """Config flow for Koolnova integration."""
-import asyncio
 import logging
 from typing import Any, Dict, Optional
 
@@ -9,7 +8,6 @@ from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
-from homeassistant.components.climate import HVACMode
 
 from .koolnova_api.client import KoolnovaAPIRestClient
 from .koolnova_api.exceptions import KoolnovaError
@@ -38,6 +36,10 @@ from .const import (
     CONF_MIN_TEMP,
     CONF_MAX_TEMP,
     CONF_TEMP_PRECISION,
+    DEFAULT_REQUEST_TIMEOUT,
+    MIN_REQUEST_TIMEOUT,
+    MAX_REQUEST_TIMEOUT,
+    CONF_REQUEST_TIMEOUT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -60,7 +62,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         if user_input is None:
             return self.async_show_form(
-                step_id="user", 
+                step_id="user",
                 data_schema=STEP_USER_DATA_SCHEMA
             )
 
@@ -78,8 +80,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         else:
             await self.async_set_unique_id(user_input[CONF_EMAIL])
             self._abort_if_unique_id_configured()
-            
-            # Configuracion inicial con valores por defecto
+
+            # Initial configuration with default values
             config_data = {
                 CONF_EMAIL: user_input[CONF_EMAIL],
                 CONF_PASSWORD: user_input[CONF_PASSWORD],
@@ -90,24 +92,29 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_MIN_TEMP: DEFAULT_MIN_TEMP,
                 CONF_MAX_TEMP: DEFAULT_MAX_TEMP,
                 CONF_TEMP_PRECISION: DEFAULT_TEMP_PRECISION,
+                CONF_REQUEST_TIMEOUT: DEFAULT_REQUEST_TIMEOUT,
             }
 
             return self.async_create_entry(title=info["title"], data=config_data)
 
         return self.async_show_form(
-            step_id="user", 
-            data_schema=STEP_USER_DATA_SCHEMA, 
+            step_id="user",
+            data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors
         )
 
     async def _validate_input(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate the user input allows us to connect."""
         try:
-            client = KoolnovaAPIRestClient(data[CONF_EMAIL], data[CONF_PASSWORD])
-            
+            client = KoolnovaAPIRestClient(
+                username="",
+                email=data[CONF_EMAIL],
+                password=data[CONF_PASSWORD],
+            )
+
             # Test connection
             await self.hass.async_add_executor_job(client.get_project)
-            
+
         except KoolnovaError as err:
             if "401" in str(err) or "authentication" in str(err).lower():
                 raise InvalidAuth
@@ -138,7 +145,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
         if user_input is not None:
-            # Validar rangos
+            # Validate ranges
             if user_input[CONF_MIN_TEMP] >= user_input[CONF_MAX_TEMP]:
                 return self.async_show_form(
                     step_id="user",
@@ -158,40 +165,47 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         current_data = self.entry.data
         current_options = self.entry.options
 
-        # Obtener valores actuales o por defecto
-        current_interval = current_options.get(CONF_UPDATE_INTERVAL, current_data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL))
+        # Get current or default values
+        current_update_interval = current_options.get(CONF_UPDATE_INTERVAL, current_data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL))
         current_project_update_freq = current_options.get(CONF_PROJECT_UPDATE_FREQUENCY, current_data.get(CONF_PROJECT_UPDATE_FREQUENCY, DEFAULT_PROJECT_UPDATE_FREQUENCY))
         current_project_modes = current_options.get(CONF_PROJECT_HVAC_MODES, current_data.get(CONF_PROJECT_HVAC_MODES, [mode.value for mode in DEFAULT_PROJECT_HVAC_MODES]))
         current_zone_modes = current_options.get(CONF_ZONE_HVAC_MODES, current_data.get(CONF_ZONE_HVAC_MODES, [mode.value for mode in DEFAULT_ZONE_HVAC_MODES]))
         current_min_temp = current_options.get(CONF_MIN_TEMP, current_data.get(CONF_MIN_TEMP, DEFAULT_MIN_TEMP))
         current_max_temp = current_options.get(CONF_MAX_TEMP, current_data.get(CONF_MAX_TEMP, DEFAULT_MAX_TEMP))
         current_precision = current_options.get(CONF_TEMP_PRECISION, current_data.get(CONF_TEMP_PRECISION, DEFAULT_TEMP_PRECISION))
+        current_request_timeout = current_options.get(CONF_REQUEST_TIMEOUT, current_data.get(CONF_REQUEST_TIMEOUT, DEFAULT_REQUEST_TIMEOUT))
 
-        return vol.Schema({
-            vol.Required(CONF_UPDATE_INTERVAL, default=current_interval): vol.All(
-                cv.positive_int,
-                vol.Range(min=MIN_UPDATE_INTERVAL, max=MAX_UPDATE_INTERVAL)
-            ),
-            vol.Required(CONF_PROJECT_UPDATE_FREQUENCY, default=current_project_update_freq): vol.All(
-                cv.positive_int,
-                vol.Range(min=MIN_PROJECT_UPDATE_FREQUENCY, max=MAX_PROJECT_UPDATE_FREQUENCY)
-            ),
-            vol.Required(CONF_PROJECT_HVAC_MODES, default=current_project_modes): cv.multi_select({
-                mode.value: mode.value.title() for mode in AVAILABLE_HVAC_MODES
-            }),
-            vol.Required(CONF_ZONE_HVAC_MODES, default=current_zone_modes): cv.multi_select({
-                mode.value: mode.value.title() for mode in AVAILABLE_HVAC_MODES
-            }),
-            vol.Required(CONF_MIN_TEMP, default=current_min_temp): vol.All(
-                vol.Coerce(float),
-                vol.Range(min=MIN_CONFIGURABLE_TEMP, max=MAX_CONFIGURABLE_TEMP)
-            ),
-            vol.Required(CONF_MAX_TEMP, default=current_max_temp): vol.All(
-                vol.Coerce(float),
-                vol.Range(min=MIN_CONFIGURABLE_TEMP, max=MAX_CONFIGURABLE_TEMP)
-            ),
-            vol.Required(CONF_TEMP_PRECISION, default=current_precision): vol.In(AVAILABLE_TEMP_PRECISIONS),
-        })
+        return vol.Schema(
+            {
+                vol.Required(CONF_UPDATE_INTERVAL, default=current_update_interval): vol.All(
+                    cv.positive_int,
+                    vol.Range(min=MIN_UPDATE_INTERVAL, max=MAX_UPDATE_INTERVAL)
+                ),
+                vol.Required(CONF_PROJECT_UPDATE_FREQUENCY, default=current_project_update_freq): vol.All(
+                    cv.positive_int,
+                    vol.Range(min=MIN_PROJECT_UPDATE_FREQUENCY, max=MAX_PROJECT_UPDATE_FREQUENCY)
+                ),
+                vol.Required(CONF_PROJECT_HVAC_MODES, default=current_project_modes): cv.multi_select({
+                    mode.value: mode.value.title() for mode in AVAILABLE_HVAC_MODES
+                }),
+                vol.Required(CONF_ZONE_HVAC_MODES, default=current_zone_modes): cv.multi_select({
+                    mode.value: mode.value.title() for mode in AVAILABLE_HVAC_MODES
+                }),
+                vol.Required(CONF_MIN_TEMP, default=current_min_temp): vol.All(
+                    vol.Coerce(float),
+                    vol.Range(min=MIN_CONFIGURABLE_TEMP, max=MAX_CONFIGURABLE_TEMP)
+                ),
+                vol.Required(CONF_MAX_TEMP, default=current_max_temp): vol.All(
+                    vol.Coerce(float),
+                    vol.Range(min=MIN_CONFIGURABLE_TEMP, max=MAX_CONFIGURABLE_TEMP)
+                ),
+                vol.Required(CONF_TEMP_PRECISION, default=current_precision): vol.In(AVAILABLE_TEMP_PRECISIONS),
+                vol.Required(CONF_REQUEST_TIMEOUT, default=current_request_timeout): vol.All(
+                    cv.positive_int,
+                    vol.Range(min=MIN_REQUEST_TIMEOUT, max=MAX_REQUEST_TIMEOUT)
+                ),
+            }
+        )
 
 class CannotConnect(Exception):
     """Error to indicate we cannot connect."""

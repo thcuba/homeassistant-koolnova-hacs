@@ -1,6 +1,6 @@
 name: Koolnova
 description: Custom integration for Home Assistant that lets you control Koolnova HVAC systems via the Koolnova REST API.
-homeassistant: "2026.0.0"
+homeassistant: "2025.12.0"
 type: integration
 keywords:
   - koolnova

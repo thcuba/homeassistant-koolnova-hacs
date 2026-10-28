@@ -1,0 +1,54 @@
+name: Release version
+
+# docs/RELEASE.md: "Tag and manifest.json MUST be identical".
+#
+# It is not cosmetic: HACS reads manifest.json to decide whether an update is available, so a
+# manifest left behind while the tags move on makes HACS offer the same update indefinitely - it
+# installs the release, still sees the old version declared, and asks again.
+#
+# The repo was in exactly that state: manifest at 2.0.4 while releases went to 2.0.9, with nothing
+# anywhere comparing the two. These two jobs are that comparison.
+
+on:
+  push:
+    tags:
+      - "*"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # A tag *is* the release, so on a tag build the two must be identical.
+  tag-matches-manifest:
+    name: Tag matches manifest
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the tag against manifest.json
+        env:
+          # Through the environment, not interpolated into the script: a tag name is repository
+          # input, and inline interpolation would let it break out of the command.
+          REF_NAME: ${{ github.ref_name }}
+        run: python scripts/check_version.py --tag "$REF_NAME"
+
+  # Before tagging, the manifest must at least not have fallen behind the newest release.
+  manifest-not-behind:
+    name: Manifest not behind the latest release
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The tags are what "the latest release" means, so the full history is needed.
+          fetch-depth: 0
+      - name: Check the manifest against the newest tag
+        run: |
+          latest="$(git tag --sort=-creatordate | head -1)"
+          if [ -z "$latest" ]; then
+            echo "Nessun tag nel repository: niente da confrontare."
+            exit 0
+          fi
+          echo "Tag piu' recente: $latest"
+          python scripts/check_version.py --not-older-than "$latest"

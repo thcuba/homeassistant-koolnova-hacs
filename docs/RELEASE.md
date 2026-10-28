@@ -19,7 +19,7 @@ This integration is HACS (Home Assistant Community Store) compatible:
 
 - **Type**: Integration
 - **Installation method**: GitHub release (standard GitHub releases)
-- **Repository URL**: https://github.com/luisgsluis/homeassistant-koolnova
+- **Repository URL**: https://github.com/thcuba/homeassistant-koolnova
 
 ### HACS Requirements
 - `manifest.json` with correct metadata
@@ -29,29 +29,28 @@ This integration is HACS (Home Assistant Community Store) compatible:
 
 ### Required HACS Configuration (`hacs.json`)
 
-The `hacs.json` file MUST include the following fields:
+The `hacs.json` file should include the following fields:
 
 ```json
 {
-  "name": "Integration Name",
-  "homeassistant": "minimum compatible version",
-  "domain": "integration_domain",
-  "repository": "https://github.com/user/repository",
-  "zip_release": false,
-  "config_flow": true,
-  "iot_class": "iot_class",
-  "categories": ["Category"]
+  "name": "Koolnova",
+  "homeassistant": "2024.12.0",
+  "country": ["IT"]
 }
 ```
 
 **Critical fields**:
-- `"domain"`: MUST match `manifest.json` domain exactly
-- `"repository"`: Full GitHub repository URL
-- `"zip_release"`: `false` (HACS uses standard GitHub zip downloads)
+- `"homeassistant"`: Minimum compatible version.
+- `"country"`: List of countries where the integration is relevant.
 
 ## Changelog
 
-### v1.2.0 (Upcoming – Critical Fix)
+### v1.2.5
+- Maintenance release
+- Metadata synchronization and documentation updates
+- Internal consistency checks for HACS compliance
+
+### v1.2.0
 - 🚨 **CRITICAL FIX**: Resolved import conflict that caused 404 errors
 - ✅ Removed conflicting PyPI package `koolnova-api`
 - ✅ Renamed local module to `koolnova_api` (underscore)
@@ -94,19 +93,13 @@ REPOSITORY_ROOT/
 
 ```json
 {
-  "name": "Integration Name",
-  "homeassistant": "minimum version",
-  "domain": "exact_domain",      // MUST match manifest.json
-  "repository": "full_github_url",
-  "config_flow": true/false,
-  "iot_class": "iot_class",
-  "categories": ["Category"]
+  "name": "Koolnova",
+  "homeassistant": "2024.12.0",
+  "country": ["IT"]
 }
 ```
 
-**❌ DO NOT USE**:
-- `"zip_release": true` (HACS uses standard GitHub downloads)
-- `"filename": "custom.zip"` (no custom ZIPs allowed)
+**Note**: Do not include `domain`, `repository`, `categories`, or `zip_release` in `hacs.json` as they are either redundant or invalid for integrations and can cause CI failures.
 
 ### Steps for HACS-Compatible Release
 
@@ -138,10 +131,24 @@ REPOSITORY_ROOT/
 Downloading luisgsluis/homeassistant-koolnova with version vX.Y.Z failed with (No content to download)
 ```
 
+**PROBLEM 2**: HACS keeps offering the same update. It reads `manifest.json` to decide whether an
+update is available, so if the manifest is behind while the tags move on it installs the release,
+still sees the old version declared, and proposes the update again - forever.
+
 **SOLUTION**: Ensure that:
 - Tag is `v1.2.1`
 - `manifest.json` has `"version": "1.2.1"`
 - They are exactly identical (no prefix/suffix)
+
+**Enforced automatically**: `scripts/check_version.py`, run by the `Release version` workflow. A
+pushed tag whose `manifest.json` disagrees fails the build, and a pull request whose manifest has
+fallen behind the newest tag fails too - so the drift cannot go unnoticed again. Both checks run
+locally as well:
+
+```bash
+python scripts/check_version.py --tag 2.0.9                        # a release about to be tagged
+python scripts/check_version.py --not-older-than $(git tag --sort=-creatordate | head -1)
+```
 
 ## Distribution
 
@@ -152,7 +159,7 @@ Downloading luisgsluis/homeassistant-koolnova with version vX.Y.Z failed with (N
 ## Pre-Release Checklist
 
 - [ ] All changes tested in Home Assistant
-- [ ] `manifest.json` version matches upcoming tag
+- [ ] `manifest.json` version matches upcoming tag (`python scripts/check_version.py --tag <tag>`)
 - [ ] `hacs.json` configured correctly
 - [ ] `custom_components/` directory present
 - [ ] All imports use relative syntax (development rule check)
