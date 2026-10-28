@@ -16,10 +16,14 @@ from koolnova_api.client import KoolnovaAPIRestClient
 def extract_api_data_detailed():
     """Extrae y analiza detalladamente todos los datos de los endpoints adicionales"""
 
-    # Credenciales
-    username = "luisgsluis@gmail.com"
-    password = "aKOtur1!"
-    email = username
+    # Credentials come from the environment: never commit an account to this repo.
+    #   export KOOLNOVA_USERNAME=... KOOLNOVA_PASSWORD=... [KOOLNOVA_EMAIL=...]
+    username = os.environ.get("KOOLNOVA_USERNAME", "")
+    password = os.environ.get("KOOLNOVA_PASSWORD", "")
+    email = os.environ.get("KOOLNOVA_EMAIL", username)
+    if not username or not password:
+        print("Set KOOLNOVA_USERNAME and KOOLNOVA_PASSWORD before running this exploration.")
+        return
 
     print("🔬 EXTRACCIÓN DETALLADA DE DATOS API")
     print("=" * 80)

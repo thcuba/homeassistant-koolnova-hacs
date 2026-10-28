@@ -1,63 +1,114 @@
 {
-    "config": {
-        "step": {
-            "user": {
-                "title": "Configura Koolnova",
-                "description": "Inserisci le credenziali del tuo account Koolnova",
-                "data": {
-                    "email": "Indirizzo email",
-                    "password": "Password"
-                }
-            }
-        },
-        "error": {
-            "cannot_connect": "Impossibile connettersi all'API di Koolnova",
-            "invalid_auth": "Email o password non validi",
-            "unknown": "Si è verificato un errore imprevisto"
-        },
-        "abort": {
-            "already_configured": "L'account è già configurato"
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configura Koolnova",
+        "description": "Inserisci le credenziali del tuo account Koolnova",
+        "data": {
+          "email": "Indirizzo email",
+          "password": "Password"
         }
+      }
     },
-    "options": {
-        "step": {
-            "user": {
-                "title": "Configura opzioni Koolnova",
-                "description": "Personalizza il comportamento e i limiti dell'integrazione",
-                "data": {
-                    "update_interval": "Intervallo di aggiornamento (secondi)",
-                    "project_update_frequency": "Frequenza aggiornamento progetto (cicli)",
-                    "project_hvac_modes": "Modalità HVAC del progetto",
-                    "zone_hvac_modes": "Modalità HVAC delle zone",
-                    "min_temp": "Temperatura minima",
-                    "max_temp": "Temperatura massima",
-                    "temp_precision": "Precisione temperatura"
-                }
-            }
-        },
-        "error": {
-            "temp_range_invalid": "La temperatura minima deve essere inferiore alla temperatura massima"
-        }
+    "error": {
+      "cannot_connect": "Impossibile connettersi all'API di Koolnova",
+      "invalid_auth": "Email o password non validi",
+      "unknown": "Si è verificato un errore imprevisto"
     },
-    "entity": {
-        "climate": {
-            "koolnova_project": {
-                "name": "Controllo globale Koolnova",
-                "state_attributes": {
-                    "preset_mode": {
-                        "name": "Modalità zona",
-                        "state": {
-                            "off": "Spento",
-                            "auto": "Automatico"
-                        }
-                    }
-                }
-            }
-        },
-        "sensor": {
-            "connectivity_status": {
-                "name": "Stato connettività"
-            }
-        }
+    "abort": {
+      "already_configured": "L'account è già configurato"
     }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Configura opzioni Koolnova",
+        "description": "Personalizza il comportamento e i limiti dell'integrazione",
+        "data": {
+          "update_interval": "Intervallo di aggiornamento (secondi)",
+          "project_update_frequency": "Frequenza aggiornamento progetto (cicli)",
+          "project_hvac_modes": "Modalità HVAC del progetto",
+          "zone_hvac_modes": "Modalità HVAC delle zone",
+          "min_temp": "Temperatura minima",
+          "max_temp": "Temperatura massima",
+          "temp_precision": "Precisione temperatura",
+          "request_timeout": "Timeout richiesta API (secondi)"
+        }
+      }
+    },
+    "error": {
+      "temp_range_invalid": "La temperatura minima deve essere inferiore alla temperatura massima"
+    }
+  },
+  "entity": {
+    "climate": {
+      "koolnova_project": {
+        "name": "Controllo globale",
+        "state_attributes": {
+          "preset_mode": {
+            "name": "Modalità zona",
+            "state": {
+              "off": "Spento",
+              "auto": "Automatico"
+            }
+          }
+        }
+      },
+      "koolnova_hub": {
+        "name": "Controllo Hub",
+        "state_attributes": {
+          "preset_mode": {
+            "name": "Modalità",
+            "state": {
+              "manual": "Manuale",
+              "auto": "Automatico",
+              "planning": "Programmazione"
+            }
+          }
+        }
+      },
+      "koolnova_zone": {
+        "state": {
+          "auto": "Acceso",
+          "off": "Spento"
+        }
+      },
+      "connectivity_status": {
+        "name": "Connectivity Status",
+        "state_attributes": {
+          "wifi_signal": {
+            "name": "WiFi Signal"
+          },
+          "online": {
+            "name": "Online"
+          },
+          "last_update": {
+            "name": "Last Update"
+          },
+          "rooms_last_update": {
+            "name": "Rooms Last Update"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "connectivity_status": {
+        "name": "Connectivity Status",
+        "state_attributes": {
+          "wifi_signal": {
+            "name": "WiFi Signal"
+          },
+          "online": {
+            "name": "Online"
+          },
+          "last_update": {
+            "name": "Last Update"
+          },
+          "rooms_last_update": {
+            "name": "Rooms Last Update"
+          }
+        }
+      }
+    }
+  }
 }

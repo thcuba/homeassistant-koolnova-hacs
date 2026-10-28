@@ -1,63 +1,114 @@
 {
-    "config": {
-        "step": {
-            "user": {
-                "title": "Set up Koolnova",
-                "description": "Enter your Koolnova account credentials",
-                "data": {
-                    "email": "Email Address",
-                    "password": "Password"
-                }
-            }
-        },
-        "error": {
-            "cannot_connect": "Failed to connect to Koolnova API",
-            "invalid_auth": "Invalid email or password",
-            "unknown": "Unexpected error occurred"
-        },
-        "abort": {
-            "already_configured": "Account is already configured"
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Koolnova",
+        "description": "Enter your Koolnova account credentials",
+        "data": {
+          "email": "Email Address",
+          "password": "Password"
         }
+      }
     },
-    "options": {
-        "step": {
-            "user": {
-                "title": "Configure Koolnova Options",
-                "description": "Customize integration behavior and limits",
-                "data": {
-                    "update_interval": "Update Interval (seconds)",
-                    "project_update_frequency": "Project Update Frequency (cycles)",
-                    "project_hvac_modes": "Project HVAC Modes",
-                    "zone_hvac_modes": "Zone HVAC Modes",
-                    "min_temp": "Minimum Temperature",
-                    "max_temp": "Maximum Temperature",
-                    "temp_precision": "Temperature Precision"
-                }
-            }
-        },
-        "error": {
-            "temp_range_invalid": "Minimum temperature must be less than maximum temperature"
-        }
+    "error": {
+      "cannot_connect": "Failed to connect to Koolnova API",
+      "invalid_auth": "Invalid email or password",
+      "unknown": "Unexpected error occurred"
     },
-    "entity": {
-        "climate": {
-            "koolnova_project": {
-                "name": "Koolnova Global Control",
-                "state_attributes": {
-                    "preset_mode": {
-                        "name": "Zone Mode",
-                        "state": {
-                            "off": "Off",
-                            "auto": "Auto"
-                        }
-                    }
-                }
-            }
-        },
-        "sensor": {
-            "connectivity_status": {
-                "name": "Connectivity Status"
-            }
-        }
+    "abort": {
+      "already_configured": "Account is already configured"
     }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Configure Koolnova Options",
+        "description": "Customize integration behavior and limits",
+        "data": {
+          "update_interval": "Update Interval (seconds)",
+          "project_update_frequency": "Project Update Frequency (cycles)",
+          "project_hvac_modes": "Project HVAC Modes",
+          "zone_hvac_modes": "Zone HVAC Modes",
+          "min_temp": "Minimum Temperature",
+          "max_temp": "Maximum Temperature",
+          "temp_precision": "Temperature Precision",
+          "request_timeout": "API Request Timeout (seconds)"
+        }
+      }
+    },
+    "error": {
+      "temp_range_invalid": "Minimum temperature must be less than maximum temperature"
+    }
+  },
+  "entity": {
+    "climate": {
+      "koolnova_project": {
+        "name": "Global Control",
+        "state_attributes": {
+          "preset_mode": {
+            "name": "Zone Mode",
+            "state": {
+              "off": "Off",
+              "auto": "Auto"
+            }
+          }
+        }
+      },
+      "koolnova_hub": {
+        "name": "Hub Control",
+        "state_attributes": {
+          "preset_mode": {
+            "name": "Mode",
+            "state": {
+              "manual": "Manual",
+              "auto": "Auto",
+              "planning": "Planning"
+            }
+          }
+        }
+      },
+      "koolnova_zone": {
+        "state": {
+          "auto": "On",
+          "off": "Off"
+        }
+      },
+      "connectivity_status": {
+        "name": "Connectivity Status",
+        "state_attributes": {
+          "wifi_signal": {
+            "name": "WiFi Signal"
+          },
+          "online": {
+            "name": "Online"
+          },
+          "last_update": {
+            "name": "Last Update"
+          },
+          "rooms_last_update": {
+            "name": "Rooms Last Update"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "connectivity_status": {
+        "name": "Connectivity Status",
+        "state_attributes": {
+          "wifi_signal": {
+            "name": "WiFi Signal"
+          },
+          "online": {
+            "name": "Online"
+          },
+          "last_update": {
+            "name": "Last Update"
+          },
+          "rooms_last_update": {
+            "name": "Rooms Last Update"
+          }
+        }
+      }
+    }
+  }
 }

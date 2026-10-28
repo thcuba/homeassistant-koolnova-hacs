@@ -1,5 +1,4 @@
 """The Koolnova integration."""
-import asyncio
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -17,8 +16,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     coordinator = KoolnovaDataUpdateCoordinator(hass, entry)
 
-    # Only do first refresh if data is empty (initial setup)
-    if not coordinator.data or not coordinator.data.get("projects"):
+    # Only do first refresh if no projects loaded yet (initial setup)
+    if not coordinator.data.get("projects"):
         await coordinator.async_config_entry_first_refresh()
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
